@@ -11,7 +11,7 @@
  *
  * The BSD License (3-clause license)
  *
- * Copyright (c) 2017 Gunar Schorcht (https://github.com/gschorcht]
+ * Copyright (c) 2017 Gunar Schorcht (https://github.com/gschorcht)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,11 +48,8 @@
 // #define BME680_DEBUG_LEVEL_1    // only error messages
 // #define BME680_DEBUG_LEVEL_2    // debug and error messages
 
-#if defined(ESP_PLATFORM) || defined(__linux__)
 #include "bme680_types.h"
-#else
-#include "bme680/bme680_types.h"
-#endif
+#include "bme680_platform.h"
 
 // BME680 addresses
 #define BME680_I2C_ADDRESS_1           0x76  // SDO pin is low

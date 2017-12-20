@@ -2,7 +2,7 @@
 
 The driver supports multiple BME680 sensors which are either connected to the SPI or to the same or different I2C interfaces with different addresses.
 
-It is for the usage with the ESP8266 and [esp-open-rtos](https://github.com/SuperHouse/esp-open-rtos). 
+It is for the usage with the ESP8266 and [esp-open-rtos](https://github.com/SuperHouse/esp-open-rtos).
 The driver is also working with ESP32 and [ESP-IDF](https://github.com/espressif/esp-idf.git) using a wrapper component for ESP8266 functions, see folder ```components/esp8266_wrapper```, as well as Linux based systems using a wrapper library.
 
 ## About the sensor
@@ -50,7 +50,7 @@ if (bme680_force_measurement (sensor)) // STEP 1
 {
     // STEP 2: passive waiting until measurement results are available
     vTaskDelay (duration);
-      
+
     // STEP 3: get the results and do something with them
     if (bme680_get_results_float (sensor, &values))
         ...
@@ -64,7 +64,7 @@ if (bme680_force_measurement (sensor)) // STEP 1
 {
     // STEP 2: busy waiting until measurement results are available
     while (bme680_is_measuring (sensor)) ;
-      
+
     // STEP 3: get the results and do something with them
     if (bme680_get_results_float (sensor, &values))
         ...
@@ -143,11 +143,11 @@ bme680_set_filter_size(sensor, iir_size_7);
 bme680_set_filter_size(sensor, iir_size_0);
 ...
 ```
-        
+
 #### Heater profile
 
 For the gas measurement, the sensor integrates a heater. Parameters for this heater are defined by **heater profiles**. The sensor supports up to 10 such heater profiles, which are numbered from 0 to 9. Each profile consists of a temperature set-point (the target temperature) and a heating duration. By default, only the heater profile 0 with 320 degree Celsius as target temperature and 150 ms heating duration is defined.
- 
+
 **Please note:** According to the data sheet, target temperatures between 200 and 400 degrees Celsius are typical and about 20 to 30 ms are necessary for the heater to reach the desired target temperature.
 
 Function ```bme680_set_heater_profile``` can be used to set the parameters for one of the heater profiles 0 ... 9. Once the parameters of a heater profile are defined, the gas measurement can be activated with that heater profile using function ```bme680_use_heater_profile```. If -1 or ```BME680_HEATER_NOT_USED``` is used as heater profile, gas measurement is deactivated completely.
@@ -179,7 +179,7 @@ the user task could use them as a sequence like following:
 
 ```
 ...
-while (1) 
+while (1)
 {
     switch (count++ % 5)
     {
@@ -197,7 +197,7 @@ while (1)
     if (bme680_force_measurement (sensor))
     {
         vTaskDelay (duration);
-        
+
         // get the results and do something with them
         if (bme680_get_results_float (sensor, &values))
             ...
@@ -234,7 +234,7 @@ if (bme680_get_results_float (sensor, &values))
 else
 {
     // error happened
-    
+
     switch (sensor->error_code & BME680_INT_ERROR_MASK)
     {
         case BME680_I2C_BUSY:        ...
@@ -250,7 +250,7 @@ else
 }
 ```
 
-## Usage 
+## Usage
 
 First, the hardware configuration has to be established. This can differ dependent on the communication interface and the number of sensors used.
 
@@ -263,8 +263,8 @@ First figure shows the configuration with only one sensor at I2C bus 0.
 ```
  +-------------------------+     +--------+
  | ESP8266  Bus 0          |     | BME680 |
- |          GPIO 5 (SCL)   +---->+ SCL    |
- |          GPIO 4 (SDA)   +-----+ SDA    |
+ |          GPIO 5 (SCL)   ------> SCL    |
+ |          GPIO 4 (SDA)   <-----> SDA    |
  |                         |     +--------+
  +-------------------------+
 ```
@@ -275,15 +275,15 @@ Next figure shows the configuration with only one sensor at SPI bus using GPIO2 
  +-------------------------+     +--------+
  |          Bus 1          |     | BME680 |
  |          GPIO 12 (MISO) <------ SDO    |
- |          GPIO 13 (MOSI) >-----> SDI    |
- |          GPIO 14 (SCK)  >-----> SCK    |
- |          GPIO 2  (CS)   >-----> CS     |
+ |          GPIO 13 (MOSI) ------> SDI    |
+ |          GPIO 14 (SCK)  ------> SCK    |
+ |          GPIO 2  (CS)   ------> CS     |
  +-------------------------+     +--------+
 ```
 
-**Please note:** 
+**Please note:**
 
-1. Since the system flash memory is connected to SPI bus 0, the sensor has to be connected to SPI bus 1. 
+1. Since the system flash memory is connected to SPI bus 0, the sensor has to be connected to SPI bus 1.
 
 2. GPIO15 which is used as CS signal of SPI bus 1 does not work correctly together with the BME680. Therefore, the user has to specify another GPIO pin as CS signal, e.g., GPIO2.
 Next figure shows a possible configuration with two I2C buses. In that case, the sensors can have same or different I2C slave addresses.
@@ -292,11 +292,11 @@ Next figure shows a possible configuration with two I2C buses. In that case, the
  +-------------------------+     +----------+
  | ESP8266  Bus 0          |     | BME680_1 |
  |          GPIO 5 (SCL)   ------> SCL      |
- |          GPIO 4 (SDA)   ------- SDA      |
+ |          GPIO 4 (SDA)   <-----> SDA      |
  |                         |     +----------+
  |          Bus 1          |     | BME680_2 |
  |          GPIO 14 (SCL)  ------> SCL      |
- |          GPIO 12 (SDA)  ------- SDA      |
+ |          GPIO 12 (SDA)  <-----> SDA      |
  +-------------------------+     +----------+
 ```
 
@@ -305,13 +305,13 @@ Last figure shows a possible configuration using I2C bus 0 and SPI bus 1 at the 
  +-------------------------+     +----------+
  | ESP8266  Bus 0          |     | BME680_1 |
  |          GPIO 5 (SCL)   ------> SCL      |
- |          GPIO 4 (SDA)   ------- SDA      |
+ |          GPIO 4 (SDA)   <-----> SDA      |
  |                         |     +----------+
  |          Bus 1          |     | BME680_2 |
  |          GPIO 12 (MISO) <------ SDO      |
- |          GPIO 13 (MOSI) >-----> SDI      |
- |          GPIO 14 (SCK)  >-----> SCK      |
- |          GPIO 2  (CS)   >-----> CS       |
+ |          GPIO 13 (MOSI) ------> SDI      |
+ |          GPIO 14 (SCK)  ------> SCK      |
+ |          GPIO 2  (CS)   ------> CS       |
  +-------------------------+     +----------+
 ```
 
@@ -329,8 +329,8 @@ Dependent on the hardware configuration, the communication interface settings ha
 
 // define I2C interface for BME680 sensors
 #define I2C_BUS         0
-#define I2C_SCL_PIN     GPIO_ID_PIN((5))
-#define I2C_SDA_PIN     GPIO_ID_PIN((4))
+#define I2C_SCL_PIN     5
+#define I2C_SDA_PIN     4
 #endif
 
 ```
@@ -378,18 +378,18 @@ if (sensor)
     xTaskCreate(user_task, "user_task", 256, NULL, 2, NULL);
 
     /** -- OPTIONAL PART -- */
-           
+
     // Changes the oversampling rates to 4x oversampling for temperature
     // and 2x oversampling for humidity. Pressure measurement is skipped.
     bme680_set_oversampling_rates(sensor, osr_4x, osr_none, osr_2x);
-    
+
     // Change the IIR filter size for temperature and pressure to 7.
     bme680_set_filter_size(sensor, iir_size_7);
 
     // Change the heater profile 0 to 200 degree Celsius for 100 ms.
     bme680_set_heater_profile (sensor, 0, 200, 100);
     bme680_use_heater_profile (sensor, 0);
-     
+
     ...
 }
 ```
@@ -410,26 +410,26 @@ void user_task(void *pvParameters)
     bme680_values_float_t values;
 
     TickType_t last_wakeup = xTaskGetTickCount();
-    
+
     // as long as sensor configuration isn't changed, duration is constant
     uint32_t duration = bme680_get_measurement_duration(sensor);
 
-    while (1) 
+    while (1)
     {
-        // trigger the sensor to start one TPHG measurement cycle 
+        // trigger the sensor to start one TPHG measurement cycle
         bme680_force_measurement (sensor);
-        
+
         // passive waiting until measurement results are available
         vTaskDelay (duration);
-        
+
         // alternatively: busy waiting until measurement results are available
         // while (bme680_is_measuring (sensor)) ;
 
         // get the results and do something with them
         if (bme680_get_results_float (sensor, &values))
-            printf("%.3f BME680 Sensor: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n", 
+            printf("%.3f BME680 Sensor: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n",
                    (double)sdk_system_get_time()*1e-3,
-                   values.temperature, values.humidity, 
+                   values.temperature, values.humidity,
                    values.pressure, values.gas_resistance);
 
         // passive waiting until 1 second is over
@@ -438,7 +438,7 @@ void user_task(void *pvParameters)
 }
 ```
 
-Function ```bme680_force_measurement``` is called inside the task loop to perform exactly one measurement in each cycle. 
+Function ```bme680_force_measurement``` is called inside the task loop to perform exactly one measurement in each cycle.
 
 The task is then delayed using function ```vTaskDelay``` and the value returned from function ```bme680_get_measurement_duration``` or as long as function ```bme680_is_measuring``` returns true.
 
@@ -451,7 +451,7 @@ Once the measurement results are available, they can be fetched as fixed point o
 ```
 // Uncomment to use SPI
 // #define SPI_USED
- 
+
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
 
@@ -479,7 +479,7 @@ Once the measurement results are available, they can be fetched as fixed point o
 static bme680_sensor_t* sensor;
 
 /*
- * User task that triggers measurements of sensor every seconds. It uses 
+ * User task that triggers measurements of sensor every seconds. It uses
  * function *vTaskDelay* to wait for measurement results. Busy waiting
  * alternative is shown in comments
  */
@@ -488,26 +488,26 @@ void user_task(void *pvParameters)
     bme680_values_float_t values;
 
     TickType_t last_wakeup = xTaskGetTickCount();
-    
+
     // as long as sensor configuration isn't changed, duration is constant
     uint32_t duration = bme680_get_measurement_duration(sensor);
 
-    while (1) 
+    while (1)
     {
-        // trigger the sensor to start one TPHG measurement cycle 
+        // trigger the sensor to start one TPHG measurement cycle
         bme680_force_measurement (sensor);
-        
+
         // passive waiting until measurement results are available
         vTaskDelay (duration);
-        
+
         // alternatively: busy waiting until measurement results are available
         // while (bme680_is_measuring (sensor)) ;
 
         // get the results and do something with them
         if (bme680_get_results_float (sensor, &values))
-            printf("%.3f BME680 Sensor: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n", 
+            printf("%.3f BME680 Sensor: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n",
                    (double)sdk_system_get_time()*1e-3,
-                   values.temperature, values.humidity, 
+                   values.temperature, values.humidity,
                    values.pressure, values.gas_resistance);
 
         // passive waiting until 1 second is over
@@ -522,9 +522,9 @@ void user_init(void)
     uart_set_baud(0, 115200);
     // Give the UART some time to settle
     sdk_os_delay_us(500);
-    
+
     /** -- MANDATORY PART -- */
-    
+
     #ifdef SPI_USED
     // Init the sensor connected to SPI.
     sensor = bme680_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
@@ -542,11 +542,11 @@ void user_init(void)
         xTaskCreate(user_task, "user_task", 256, NULL, 2, NULL);
 
         /** -- OPTIONAL PART -- */
-            
+
         // Changes the oversampling rates to 4x oversampling for temperature
         // and 2x oversampling for humidity. Pressure measurement is skipped.
         bme680_set_oversampling_rates(sensor, osr_4x, osr_none, osr_2x);
-    
+
         // Change the IIR filter size for temperature and pressure to 7.
         bme680_set_filter_size(sensor, iir_size_7);
 

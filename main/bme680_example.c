@@ -4,70 +4,35 @@
  *
  * Harware configuration:
  *
- *   I2C   +-------------------------+     +----------+
- *         | ESP8266  Bus 0          |     | BME680   |
- *         |          GPIO 5 (SCL)   ------> SCL      |
- *         |          GPIO 4 (SDA)   ------- SDA      |
- *         +-------------------------+     +----------+
+ *   I2C
  *
- *         +-------------------------+     +----------+
- *         | ESP32    Bus 0          |     | BME680   |
- *         |          GPIO 16 (SCL)  >-----> SCL      |
- *         |          GPIO 17 (SDA)  ------- SDA      |
- *         +-------------------------+     +----------+
+ *   +---------------+   +----------+       +---------------+   +----------+
+ *   | ESP8266       |   | BME680   |       | ESP32         |   | BME680   |
+ *   |               |   |          |       |               |   |          |
+ *   | GPIO 5 (SCL)  ----> SCL      |       | GPIO 16 (SCL) ----> SCL      |
+ *   | GPIO 4 (SDA)  <---> SDA      |       | GPIO 17 (SDA) <---> SDA      |
+ *   +---------------+   +----------+       +---------------+   +----------+
  *
- *   SPI   +-------------------------+     +----------+
- *         | ESP8266  Bus 1          |     | BME680   |
- *         |          GPIO 14 (SCK)  ------> SCK      |
- *         |          GPIO 13 (MOSI) ------> SDI      |
- *         |          GPIO 12 (MISO) <------ SDO      |
- *         |          GPIO 2  (CS)   ------> CS       |
- *         +-------------------------+     +----------+
-
- *         +-------------------------+     +----------+
- *         | ESP32    Bus 0          |     | BME680   |
- *         |          GPIO 16 (SCK)  ------> SCK      |
- *         |          GPIO 17 (MOSI) ------> SDI      |
- *         |          GPIO 18 (MISO) <------ SDO      |
- *         |          GPIO 19 (CS)   ------> CS       |
- *         +-------------------------+     +----------+
+ *   SPI   
+ *
+ *   +---------------+   +----------+        +---------------+   +----------+
+ *   | ESP8266       |   | BME680   |        | ESP32         |   | BME680   |
+ *   |               |   |          |        |               |   |          |
+ *   | GPIO 14 (SCK) ----> SCK      |        | GPIO 16 (SCK) ----> SCK      |
+ *   | GPIO 13 (MOSI)----> SDI      |        | GPIO 17 (MOSI)----> SDI      |
+ *   | GPIO 12 (MISO)<---- SDO      |        | GPIO 18 (MISO)<---- SDO      |
+ *   | GPIO 2  (CS)  ----> CS       |        | GPIO 19 (CS)  ----> CS       |
+ *   +---------------+    +---------+        +---------------+   +----------+
  */
 
 // Uncomment to use SPI
 // #define SPI_USED
 
-/* -- platform dependent includes ----------------------------- */
-
-#ifdef ESP_PLATFORM  // ESP32 (ESP-IDF)
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
-#include "esp8266_wrapper.h"
+// -- includes -----------------------------
 
 #include "bme680.h"
 
-#include <sys/time.h>
-
-#else  // ESP8266 (esp-open-rtos)
-
-#include <stdio.h>
-
-#include "espressif/esp_common.h"
-#include "espressif/sdk_private.h"
-
-#include "esp/uart.h"
-#include "esp/spi.h"
-#include "i2c/i2c.h"
-
-#include "FreeRTOS.h"
-#include "task.h"
-
-#include "bme680/bme680.h"
-
-#endif
-
-/** -- platform dependent definitions ------------------------------ */
+// -- platform dependent definitions -------
 
 #ifdef ESP_PLATFORM  // ESP32 (ESP-IDF)
 
@@ -94,6 +59,9 @@
 
 // define SPI interface for BME680 sensors
 #define SPI_BUS       1
+#define SPI_SCK_GPIO  14
+#define SPI_MOSI_GPIO 13
+#define SPI_MISO_GPIO 12
 #define SPI_CS_GPIO   2   // GPIO 15, the default CS of SPI bus 1, can't be used
 
 // define I2C interfaces for BME680 sensors
@@ -144,43 +112,31 @@ void user_task(void *pvParameters)
 }
 
 
-#ifdef ESP_PLATFORM  // ESP32 (ESP-IDF)
-void app_main()
-#else // esp-open-rtos (ESP8266)
 void user_init(void)
-#endif
 {
-    #ifdef ESP_OPEN_RTOS  // ESP8266
     // Set UART Parameter.
     uart_set_baud(0, 115200);
-    #endif
-
+    // Give the UART some time to settle
     vTaskDelay(1);
     
     /** -- MANDATORY PART -- */
 
     #ifdef SPI_USED
-    // Init the sensor connected to SPI.
-    #ifdef ESP_OPEN_RTOS
+
+    spi_bus_init (SPI_BUS, SPI_SCK_GPIO, SPI_MISO_GPIO, SPI_MOSI_GPIO);
+
+    // init the sensor connected to SPI_BUS with SPI_CS_GPIO as chip select.
     sensor = bme680_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
-    #else
-    spi_bus_config_t spi_bus_cfg = {
-        .miso_io_num=SPI_MISO_GPIO,
-        .mosi_io_num=SPI_MOSI_GPIO,
-        .sclk_io_num=SPI_SCK_GPIO,
-        .quadwp_io_num=-1,
-        .quadhd_io_num=-1
-    };
-    if (spi_bus_initialize(SPI_BUS, &spi_bus_cfg, 1) == ESP_OK)
-        sensor = bme680_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
-    #endif
-    #else
+    
+    #else  // I2C
+
     // Init all I2C bus interfaces at which BME680 sensors are connected
     i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ);
 
-    // Init the sensor connected to I2C.
+    // init the sensor with slave address BME680_I2C_ADDRESS_2 connected to I2C_BUS.
     sensor = bme680_init_sensor (I2C_BUS, BME680_I2C_ADDRESS_2, 0);
-    #endif
+
+    #endif  // SPI_USED
 
     if (sensor)
     {

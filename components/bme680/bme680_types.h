@@ -11,7 +11,7 @@
  *
  * The BSD License (3-clause license)
  *
- * Copyright (c) 2017 Gunar Schorcht (https://github.com/gschorcht]
+ * Copyright (c) 2017 Gunar Schorcht (https://github.com/gschorcht)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,10 +46,6 @@
 
 #include "stdint.h"
 #include "stdbool.h"
-
-#ifdef ESP_PLATFORM  // ESP32 (ESP-IDF)
-#include "driver/spi_master.h"
-#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -188,7 +184,6 @@ typedef struct {
 
     bme680_settings_t    settings;   // sensor settings
     bme680_calib_data_t  calib_data; // calibration data of the sensor
-
 
 } bme680_sensor_t;
 

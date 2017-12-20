@@ -51,36 +51,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#if !defined(ESP_PLATFORM) && !defined(ESP_OPEN_RTOS) && !defined(__linux__)
-#define ESP_OPEN_RTOS 1
-#endif
-
-#if ESP_OPEN_RTOS  // ESP8266
-#include "FreeRTOS.h"
-#include "task.h"
-#include "espressif/esp_common.h"
-#include "espressif/sdk_private.h"
-#include "esp/spi.h"
-#include "i2c/i2c.h"
-
-#elif ESP_PLATFORM  // ESP32 (ESP-IDF)
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "driver/spi_master.h"
-#include "esp8266_wrapper.h"
-#include <errno.h>
-
-#else  // __linux__
-#include "esp8266_wrapper.h"
-#include <errno.h>
-#endif
-
+#include "bme680_platform.h"
 #include "bme680.h"
-
-#ifdef ESP_PLATFORM  // ESP32 (ESP-IDF)
-static SemaphoreHandle_t spi_sem = 0;
-#endif
 
 #if defined(BME680_DEBUG_LEVEL_2)
 #define debug(s, f, ...) printf("%s %s: " s "\n", "BME680", f, ## __VA_ARGS__)
@@ -300,41 +272,6 @@ static bool     bme680_i2c_write (bme680_sensor_t* dev, uint8_t reg, uint8_t *da
 static bool     bme680_spi_read  (bme680_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
 static bool     bme680_spi_write (bme680_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
 
-// platform dependent SPI interface functions
-#ifdef ESP_OPEN_RTOS
-static const spi_settings_t bus_settings = {
-    .mode         = SPI_MODE3,
-    .freq_divider = SPI_FREQ_DIV_1M,
-    .msb          = true,
-    .minimal_pins = false,
-    .endianness   = SPI_LITTLE_ENDIAN
-};
-
-static bool spi_device_init (uint8_t bus, uint8_t cs)
-{
-    gpio_enable(cs, GPIO_OUTPUT);
-    gpio_write (cs, true);
-    return true;
-}
-
-static size_t spi_transfer_pf(uint8_t bus, uint8_t cs, const uint8_t *mosi, uint8_t *miso, uint16_t len)
-{
-    spi_settings_t old_settings;
-
-    spi_get_settings(bus, &old_settings);
-    spi_set_settings(bus, &bus_settings);
-    gpio_write(cs, false);
-
-    size_t transfered = spi_transfer (bus, (const void*)mosi, (void*)miso, len, SPI_8BIT);
-
-    gpio_write(cs, true);
-    spi_set_settings(bus, &old_settings);
-    
-    return transfered;
-}
-
-#endif
-
 #define lsb_msb_to_type(t,b,o) (t)(((t)b[o+1] << 8) | b[o])
 #define lsb_to_type(t,b,o)     (t)(b[o])
 
@@ -368,9 +305,8 @@ bme680_sensor_t* bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs)
         free (dev);
         return NULL;
     }
-    #if ESP_PLATFORM  // ESP32 SPI interface used
-    if (!addr && !spi_sem) spi_sem = xSemaphoreCreateMutex();
-    #endif
+    if (!addr) 
+        spi_semaphore_init();
 
     // reset the sensor
     if (!bme680_reset(dev))
@@ -1157,8 +1093,8 @@ static bool bme680_get_raw_data(bme680_sensor_t *dev, bme680_raw_data_t* raw_dat
             return false;
         }
 
-        dev->meas_status = raw[0];
         // test whether there are new data
+        dev->meas_status = raw[0];
         if (dev->meas_status & BME680_MEASURING_BITS &&
             !(dev->meas_status & BME680_NEW_DATA_BITS))
         {
@@ -1318,7 +1254,7 @@ static bool bme680_spi_set_mem_page (bme680_sensor_t* dev, uint8_t reg)
     uint8_t mem_page = (reg < 0x80) ? BME680_BIT_SWITCH_MEM_PAGE_1
                                     : BME680_BIT_SWITCH_MEM_PAGE_0;
 
-    debug_dev ("Set mem page for register %02x to %02x.", __FUNCTION__, dev, reg, mem_page);
+    debug_dev ("Set mem page for register %02x to %d.", __FUNCTION__, dev, reg, mem_page);
 
     if (!bme680_spi_write (dev, BME680_REG_SWITCH_MEM_PAGE, &mem_page, 1))
     {
@@ -1328,16 +1264,6 @@ static bool bme680_spi_set_mem_page (bme680_sensor_t* dev, uint8_t reg)
     // sdk_os_delay_us (100);
     return true;
 }
-
-// on ESP32 we have to ensure reentrance of SPI functions
-// on ESP8266 makros are dummies
-#ifdef ESP_PLATFORM  // ESP32 (ESP-IDF)
-#define spi_semaphore_take() if (reg != BME680_REG_STATUS) xSemaphoreTake(spi_sem, portMAX_DELAY);
-#define spi_semaphore_give() if (reg != BME680_REG_STATUS) xSemaphoreGive(spi_sem);
-#else  // ESP8266 (esp-open-rtos), __linux__
-#define spi_semaphore_take()
-#define spi_semaphore_give()
-#endif
 
 static bool bme680_spi_read(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
 {
