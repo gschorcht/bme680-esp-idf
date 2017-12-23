@@ -156,7 +156,7 @@ bool spi_device_init (uint8_t bus, uint8_t cs)
 
     spi_device_interface_config_t dev_cfg = {
         .clock_speed_hz = 1e6,   // 1 MHz clock
-        .mode = 3,               // SPI mode 3
+        .mode = 0,               // SPI mode 0
         .spics_io_num = cs,      // CS GPIO
         .queue_size = 1,
         .flags = 0,              // no flags set

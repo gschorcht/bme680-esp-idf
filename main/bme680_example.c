@@ -6,71 +6,68 @@
  *
  *   I2C
  *
- *   +---------------+   +----------+       +---------------+   +----------+
- *   | ESP8266       |   | BME680   |       | ESP32         |   | BME680   |
- *   |               |   |          |       |               |   |          |
- *   | GPIO 5 (SCL)  ----> SCL      |       | GPIO 16 (SCL) ----> SCL      |
- *   | GPIO 4 (SDA)  <---> SDA      |       | GPIO 17 (SDA) <---> SDA      |
- *   +---------------+   +----------+       +---------------+   +----------+
+ *   +-----------------+   +----------+
+ *   | ESP8266 / ESP32 |   | BME680   |
+ *   |                 |   |          |
+ *   |   GPIO 14 (SCL) ----> SCL      |
+ *   |   GPIO 13 (SDA) <---> SDA      |
+ *   +-----------------+   +----------+
  *
  *   SPI   
  *
- *   +---------------+   +----------+        +---------------+   +----------+
- *   | ESP8266       |   | BME680   |        | ESP32         |   | BME680   |
- *   |               |   |          |        |               |   |          |
- *   | GPIO 14 (SCK) ----> SCK      |        | GPIO 16 (SCK) ----> SCK      |
- *   | GPIO 13 (MOSI)----> SDI      |        | GPIO 17 (MOSI)----> SDI      |
- *   | GPIO 12 (MISO)<---- SDO      |        | GPIO 18 (MISO)<---- SDO      |
- *   | GPIO 2  (CS)  ----> CS       |        | GPIO 19 (CS)  ----> CS       |
- *   +---------------+    +---------+        +---------------+   +----------+
+ *   +-----------------+   +----------+      +-----------------+   +----------+
+ *   | ESP8266         |   | BME680   |      | ESP32           |   | BME680   |
+ *   |                 |   |          |      |                 |   |          |
+ *   |   GPIO 14 (SCK) ----> SCK      |      |   GPIO 16 (SCK) ----> SCK      |
+ *   |   GPIO 13 (MOSI)----> SDI      |      |   GPIO 17 (MOSI)----> SDI      |
+ *   |   GPIO 12 (MISO)<---- SDO      |      |   GPIO 18 (MISO)<---- SDO      |
+ *   |   GPIO 2  (CS)  ----> CS       |      |   GPIO 19 (CS)  ----> CS       |
+ *   +-----------------+    +---------+      +-----------------+   +----------+
  */
 
-// Uncomment to use SPI
+/* -- use following constants to define the example mode ----------- */
+
 // #define SPI_USED
 
-// -- includes -----------------------------
+/* -- includes ----------------------------------------------------- */
 
 #include "bme680.h"
 
-// -- platform dependent definitions -------
+/* -- platform dependent definitions ------------------------------- */
 
 #ifdef ESP_PLATFORM  // ESP32 (ESP-IDF)
 
-// user task stack depth
+// user task stack depth for ESP32
 #define TASK_STACK_DEPTH 2048
 
-// define SPI interface for BME680 sensors
+// SPI interface definitions for ESP32
 #define SPI_BUS       HSPI_HOST
 #define SPI_SCK_GPIO  16
 #define SPI_MOSI_GPIO 17
 #define SPI_MISO_GPIO 18
 #define SPI_CS_GPIO   19
 
-// define I2C interfaces for BME680 sensors
-#define I2C_BUS       0
-#define I2C_SCL_PIN   16
-#define I2C_SDA_PIN   17
-#define I2C_FREQ      100000
-
 #else  // ESP8266 (esp-open-rtos)
 
-// user task stack depth
+// user task stack depth for ESP8266
 #define TASK_STACK_DEPTH 256
 
-// define SPI interface for BME680 sensors
+// SPI interface definitions for ESP8266
 #define SPI_BUS       1
 #define SPI_SCK_GPIO  14
 #define SPI_MOSI_GPIO 13
 #define SPI_MISO_GPIO 12
 #define SPI_CS_GPIO   2   // GPIO 15, the default CS of SPI bus 1, can't be used
 
-// define I2C interfaces for BME680 sensors
+#endif  // ESP_PLATFORM
+
+// I2C interface defintions for ESP32 and ESP8266
 #define I2C_BUS       0
-#define I2C_SCL_PIN   5
-#define I2C_SDA_PIN   4
+#define I2C_SCL_PIN   14
+#define I2C_SDA_PIN   13
 #define I2C_FREQ      I2C_FREQ_100K
 
-#endif  // ESP_PLATFORM
+/* -- user tasks --------------------------------------------------- */
 
 static bme680_sensor_t* sensor = 0;
 
@@ -111,6 +108,7 @@ void user_task(void *pvParameters)
     }
 }
 
+/* -- main program ------------------------------------------------- */
 
 void user_init(void)
 {

@@ -68,6 +68,15 @@ void gpio_enable (gpio_num_t gpio, const gpio_mode_t mode);
  * esp-open-rtos I2C interface wrapper
  */
 
+#define I2C_FREQ_80K     80000
+#define I2C_FREQ_100K   100000
+#define I2C_FREQ_400K   400000
+#define I2C_FREQ_500K   500000
+#define I2C_FREQ_600K   600000
+#define I2C_FREQ_800K   800000
+#define I2C_FREQ_1000K 1000000
+#define I2C_FREQ_1300K 1300000
+  
 #define i2c_set_clock_stretch(bus,cs)  // not needed on ESP32
 
 void i2c_init (int bus, gpio_num_t scl, gpio_num_t sda, uint32_t freq);
