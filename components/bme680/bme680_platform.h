@@ -61,16 +61,6 @@
 #include "esp8266_wrapper.h"
 #include <errno.h>
 
-#include "freertos/semphr.h"
-
-// platform specific definitions
-#define spi_semaphore_take() if (reg != BME680_REG_STATUS) xSemaphoreTake(spi_sem, portMAX_DELAY)
-#define spi_semaphore_give() if (reg != BME680_REG_STATUS) xSemaphoreGive(spi_sem)
-#define spi_semaphore_init() if (!spi_sem) spi_sem = xSemaphoreCreateMutex()
-
-// platform specific SPI interface functions
-extern SemaphoreHandle_t spi_sem;
-
 #endif // ESP_PLATFORM
 
 #endif // __BME680_PLATFORM_H__

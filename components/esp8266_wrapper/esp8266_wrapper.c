@@ -129,9 +129,10 @@ int i2c_slave_read (uint8_t bus, uint8_t addr, const uint8_t *reg,
 
 // esp-open-rtos SPI interface wrapper
 
-#define SPI_MAX_BUS 3   // ESP32 features three SPIs (SPI, HSPI and VSPI)
+#define SPI_MAX_BUS 3   // ESP32 features three SPIs (SPI_HOST, HSPI_HOST and VSPI_HOST)
 #define SPI_MAX_CS  34  // GPIO 33 is the last port that can be used as output
 
+SemaphoreHandle_t spi_semaphores[SPI_MAX_BUS] = { 0 };
 spi_device_handle_t spi_handles[SPI_MAX_CS] = { 0 };
 
 bool spi_bus_init (spi_host_device_t host, uint8_t sclk , uint8_t miso, uint8_t mosi)
