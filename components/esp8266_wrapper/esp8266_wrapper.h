@@ -99,13 +99,6 @@ bool spi_device_init (uint8_t bus, uint8_t cs);
 size_t spi_transfer_pf(uint8_t bus, uint8_t cs, 
                        const uint8_t *mosi, uint8_t *miso, uint16_t len);
 
-extern SemaphoreHandle_t spi_semaphores[];
-
-// platform specific definitions
-#define spi_semaphore_take(d) if (d) xSemaphoreTake(spi_semaphores[d->bus], portMAX_DELAY)
-#define spi_semaphore_give(d) if (d) xSemaphoreGive(spi_semaphores[d->bus])
-#define spi_semaphore_init(d) if (d && !spi_semaphores[d->bus]) spi_semaphores[d->bus] = xSemaphoreCreateMutex()
-
 /*
  * freertos api wrapper
  */
